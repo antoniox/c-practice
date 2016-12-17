@@ -56,6 +56,34 @@ void simple_tree_remove(Tree * tree, int key) {
 }
 
 
+int node_depth(Node * node) {
+    int depth = 0;
+    while (node->parent != NULL) {
+        ++depth;
+        node = node->parent;
+    }
+    return depth;
+}
+
+
+void simple_tree_traverse(Tree * tree, void (*visit_node)(int, float, int)) {
+    void simple_visit_node(Node * node) {
+        visit_node(
+            *((int *)(node->key)),
+            *((float *)(node->value)),
+            node_depth(node)
+        );
+    }
+
+    tree_traverse(tree, simple_visit_node, PREFIX);
+}
+
+
+void print_node(int key, float value, int depth) {
+    printf("Node: key -> %d, value -> %f, depth -> %d\n", key, value, depth);
+}
+
+
 int main() {
     Tree tree;
     simple_tree_init(&tree);
@@ -64,10 +92,21 @@ int main() {
     simple_tree_insert(&tree, 3, 2.0);
     simple_tree_insert(&tree, 5, 1.0);
     simple_tree_insert(&tree, 7, 9.0);
+    simple_tree_insert(&tree, 6, 9.0);
     simple_tree_insert(&tree, 9, 2.0);
 
+    simple_tree_traverse(&tree, print_node);
+    printf("==============================\n");
+
     simple_tree_remove(&tree, 9);
+
+    simple_tree_traverse(&tree, print_node);
+    printf("==============================\n");
+
     simple_tree_remove(&tree, 4);
+
+    simple_tree_traverse(&tree, print_node);
+    printf("==============================\n");
 
     tree_destroy(&tree);
 

@@ -8,7 +8,7 @@ void tree_init(
     int (*compare_keys)(void *, void *), 
     void (*destroy_node_hook)(Node *),
     void (*insert_node_hook)(Node *),
-    void (*remove_node_hook)(Node *)
+    Node * (*remove_node_hook)(Node *)
 ) {
     tree->root = NULL;
     tree->compare_keys = compare_keys;
@@ -51,13 +51,11 @@ void subtree_insert(
 ) {
     int cmp = compare_keys(new_node->key, node->key);
 
-    if (node->left == NULL || node->right == NULL) {
-        if (cmp == 1) {
-            node->right = new_node;
-        } else {
-            node->left = new_node;
-        }
-
+    if (cmp == 1 && node->right == NULL) {
+        node->right = new_node;
+        new_node->parent = node;
+    } else if (cmp == -1 && node->left == NULL) {
+        node->left = new_node;
         new_node->parent = node;
     } else {
         subtree_insert(
@@ -128,7 +126,12 @@ void tree_remove(Tree * tree, void * key) {
         return;
     }
 
-    tree->remove_node_hook(node);
+    Node * possible_root = tree->remove_node_hook(node);
+
+    if (node == tree->root) {
+        tree->root = possible_root;
+    }
+
     tree->destroy_node_hook(node);
 }
 
@@ -137,7 +140,7 @@ void default_destroy_node_hook(Node * node) {}
 void default_insert_node_hook(Node * node) {}
 
 
-void default_remove_node_hook(Node * node) {
+Node * default_remove_node_hook(Node * node) {
     Node * candidate = NULL;
 
     if (node->left == NULL) {
@@ -162,7 +165,7 @@ void default_remove_node_hook(Node * node) {
     }
 
     if (candidate == NULL) {
-        return;
+        return NULL;
     }
 
     Node * candidate_parent = candidate->parent;
@@ -175,4 +178,45 @@ void default_remove_node_hook(Node * node) {
     candidate->parent = node->parent;
     candidate->left = node->left;
     candidate->right = node->right;
+
+    return candidate;
+}
+
+
+void subtree_traverse(
+    Node * node,
+    void (*visit_node)(Node *), Order order
+) {
+    if (order == PREFIX) {
+        visit_node(node);
+    }
+
+    if (node->left != NULL) {
+        subtree_traverse(node->left, visit_node, order);
+    }
+
+    if (order == INFIX) {
+        visit_node(node);
+    }
+
+    if (node->right != NULL) {
+        subtree_traverse(node->right, visit_node, order);
+    }
+
+    if (order == POSTFIX) {
+        visit_node(node);
+    }
+}
+
+
+void tree_traverse(
+    Tree * tree,
+    void (*visit_node)(Node *),
+    Order order
+) {
+    if (tree->root == NULL) {
+        return;
+    }
+
+    subtree_traverse(tree->root, visit_node, order);
 }
