@@ -53,15 +53,15 @@ void subtree_insert(
 ) {
     int cmp = compare_keys(new_node->key, node->key);
 
-    if (cmp == 1 && node->right == NULL) {
+    if (cmp > 0 && node->right == NULL) {
         node->right = new_node;
         new_node->parent = node;
-    } else if (cmp == -1 && node->left == NULL) {
+    } else if (cmp < 0 && node->left == NULL) {
         node->left = new_node;
         new_node->parent = node;
     } else {
         subtree_insert(
-            cmp == 1 ? node->right : node->left,
+            cmp > 0 ? node->right : node->left,
             new_node, compare_keys
         );
     }
@@ -94,7 +94,7 @@ Node * subtree_lookup(
         return node;
     }
 
-    Node * candidate = cmp == 1 ? node->right : node->left;
+    Node * candidate = cmp > 0 ? node->right : node->left;
 
     if (candidate != NULL) {
         return subtree_lookup(candidate, key, compare_keys);
