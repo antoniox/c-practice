@@ -20,19 +20,8 @@ int compare_keys(void * left, void * right) {
 }
 
 
-void destroy_node_hook(Node * node) {
-    free(node->key);
-    free(node->value);
-}
-
-
 void simple_tree_init(Tree * tree) {
-    tree_init(
-        tree, compare_keys,
-        destroy_node_hook,
-        default_insert_node_hook,
-        default_remove_node_hook
-    );
+    tree_init(tree, compare_keys, default_destroy_node_hook);
 }
 
 

@@ -1,5 +1,4 @@
 #include "stdlib.h"
-#include "stdio.h"
 
 #include "bst.h"
 #include "deque.h"
@@ -8,15 +7,11 @@
 void tree_init(
     Tree * tree,
     int (*compare_keys)(void *, void *), 
-    void (*destroy_node_hook)(Node *),
-    void (*insert_node_hook)(Node *),
-    Node * (*remove_node_hook)(Node *)
+    void (*destroy_node_hook)(Node *)
 ) {
     tree->root = NULL;
     tree->compare_keys = compare_keys;
     tree->destroy_node_hook = destroy_node_hook;
-    tree->insert_node_hook = insert_node_hook;
-    tree->remove_node_hook = remove_node_hook;
 }
 
 
@@ -41,8 +36,6 @@ void tree_destroy(Tree * tree) {
 
     tree->root = NULL;
     tree->compare_keys = NULL;
-    tree->insert_node_hook = NULL;
-    tree->remove_node_hook = NULL;
     tree->destroy_node_hook = NULL;
 }
 
@@ -72,6 +65,8 @@ void tree_insert(Tree * tree, void * key, void * value) {
     Node * new_node = (Node *) malloc(sizeof(Node));
     new_node->key = key;
     new_node->value = value;
+    new_node->left = NULL;
+    new_node->right = NULL;
 
     if (tree->root == NULL) {
         tree->root = new_node;
@@ -79,8 +74,6 @@ void tree_insert(Tree * tree, void * key, void * value) {
     } else {
         subtree_insert(tree->root, new_node, tree->compare_keys);
     }
-
-    tree->insert_node_hook(new_node);
 }
 
 
@@ -118,31 +111,7 @@ void * tree_lookup(Tree * tree, void * key) {
 }
 
 
-void tree_remove(Tree * tree, void * key) {
-    if (tree->root == NULL) {
-        return;
-    }
-
-    Node * node = subtree_lookup(tree->root, key, tree->compare_keys);
-    if (node == NULL) {
-        return;
-    }
-
-    Node * possible_root = tree->remove_node_hook(node);
-
-    if (node == tree->root) {
-        tree->root = possible_root;
-    }
-
-    tree->destroy_node_hook(node);
-}
-
-
-void default_destroy_node_hook(Node * node) {}
-void default_insert_node_hook(Node * node) {}
-
-
-Node * default_remove_node_hook(Node * node) {
+Node * remove_node(Node * node) {
     Node * candidate = NULL;
 
     if (node->left == NULL) {
@@ -178,10 +147,46 @@ Node * default_remove_node_hook(Node * node) {
     }
 
     candidate->parent = node->parent;
+
     candidate->left = node->left;
+    if (candidate->left != NULL) {
+        (candidate->left)->parent = candidate;
+    }
+
     candidate->right = node->right;
+    if (candidate->right != NULL) {
+        (candidate->right)->parent = candidate;
+    }
+
 
     return candidate;
+}
+
+
+void tree_remove(Tree * tree, void * key) {
+    if (tree->root == NULL) {
+        return;
+    }
+
+    Node * node = subtree_lookup(tree->root, key, tree->compare_keys);
+    if (node == NULL) {
+        return;
+    }
+
+    Node * possible_root = remove_node(node);
+
+    if (node == tree->root) {
+        tree->root = possible_root;
+    }
+
+    tree->destroy_node_hook(node);
+    free(node);
+}
+
+
+void default_destroy_node_hook(Node * node) {
+    free(node->key);
+    free(node->value);
 }
 
 
