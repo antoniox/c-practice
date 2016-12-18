@@ -1,6 +1,8 @@
 #include "stdlib.h"
+#include "stdio.h"
 
 #include "bst.h"
+#include "deque.h"
 
 
 void tree_init(
@@ -219,4 +221,48 @@ void tree_traverse(
     }
 
     subtree_traverse(tree->root, visit_node, order);
+}
+
+
+void generic_first_scan(
+    Tree * tree,
+    void (*visit_node)(Node *),
+    void (*deque_insert)(Deque *, void *)
+) {
+    if (tree->root == NULL) {
+        return;
+    }
+
+    Deque deque;
+    deque_init(&deque, default_destroy_list_node);
+    deque_insert(&deque, (void *)tree->root);
+
+    Node * node = NULL;
+
+    while (deque.begin != NULL) {
+        node = (Node *)deque_front(&deque);
+
+        deque_popfront(&deque);
+        visit_node(node);
+
+        if (node->left != NULL) {
+            deque_insert(&deque, (void *)node->left);
+        }
+
+        if (node->right != NULL) {
+            deque_insert(&deque, (void *)node->right);
+        }
+    }
+
+    deque_destroy(&deque);
+}
+
+
+void bfs(Tree * tree, void (*visit_node)(Node *)) {
+    return generic_first_scan(tree, visit_node, deque_pushback);
+}
+
+
+void dfs(Tree * tree, void (*visit_node)(Node *)) {
+    return generic_first_scan(tree, visit_node, deque_pushfront);
 }

@@ -79,6 +79,32 @@ void simple_tree_traverse(Tree * tree, void (*visit_node)(int, float, int)) {
 }
 
 
+void simple_bfs(Tree * tree, void (*visit_node)(int, float, int)) {
+    void simple_visit_node(Node * node) {
+        visit_node(
+            *((int *)(node->key)),
+            *((float *)(node->value)),
+            node_depth(node)
+        );
+    }
+
+    bfs(tree, simple_visit_node);
+}
+
+
+void simple_dfs(Tree * tree, void (*visit_node)(int, float, int)) {
+    void simple_visit_node(Node * node) {
+        visit_node(
+            *((int *)(node->key)),
+            *((float *)(node->value)),
+            node_depth(node)
+        );
+    }
+
+    dfs(tree, simple_visit_node);
+}
+
+
 void print_node(int key, float value, int depth) {
     printf("Node: key -> %d, value -> %f, depth -> %d\n", key, value, depth);
 }
@@ -94,6 +120,12 @@ int main() {
     simple_tree_insert(&tree, 7, 9.0);
     simple_tree_insert(&tree, 6, 9.0);
     simple_tree_insert(&tree, 9, 2.0);
+
+    simple_bfs(&tree, print_node);
+    printf("==============================\n");
+
+    simple_dfs(&tree, print_node);
+    printf("==============================\n");
 
     simple_tree_traverse(&tree, print_node);
     printf("==============================\n");
